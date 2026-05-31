@@ -171,7 +171,8 @@ http://127.0.0.1:5000
 
 ## Stored Chat History
 
-![History](screenshots/stored%20chat%20history.png)
+![Stored Chat History](screenshots/stored%20chat%20history.png)
+
 
 ## Theme Mode
 

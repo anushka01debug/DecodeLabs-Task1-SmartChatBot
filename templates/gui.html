@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartBot</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface2: #f0f0f3;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #999;
+    --accent: #534AB7;
+    --accent-light: #EEEDFE;
+    --accent-mid: #7F77DD;
+    --green: #0F6E56;
+    --green-light: #E1F5EE;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  body.dark {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --surface2: #2a2a2a;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.2);
+
+    --text: #ffffff;
+    --text2: #cccccc;
+    --text3: #888888;
+
+    --accent: #7F77DD;
+    --accent-light: #2d2a55;
+}
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.calc-grid button {
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--surface2);
+}
+
+  #app {
+    width: 100%;
+    max-width: 480px;
+    height: 680px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 0.5px solid var(--border);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── TOP BAR ── */
+  #topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface);
+  }
+  #topbar-left { display: flex; align-items: center; gap: 10px; }
+  .bot-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bot-avatar i { font-size: 18px; color: var(--accent); }
+  #bot-name { font-weight: 600; font-size: 15px; color: var(--text); }
+  #bot-status { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 4px; }
+  #bot-status::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--green); display:inline-block; }
+  #topbar-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    background: none; border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2); transition: background 0.15s;
+  }
+  .icon-btn:hover { background: var(--surface2); }
+  .icon-btn i { font-size: 16px; }
+
+  /* ── CHAT AREA ── */
+  #chat-area {
+    flex: 1; overflow-y: auto; padding: 14px 14px 6px;
+    display: flex; flex-direction: column; gap: 10px;
+    scroll-behavior: smooth;
+  }
+  #chat-area::-webkit-scrollbar { width: 4px; }
+  #chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .msg { display: flex; align-items: flex-end; gap: 7px; max-width: 85%; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.bot  { align-self: flex-start; }
+
+  .msg-av {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .msg-av.bot-av { background: var(--accent-light); }
+  .msg-av.bot-av i { font-size: 14px; color: var(--accent); }
+  .msg-av.user-av { background: var(--green-light); }
+  .msg-av.user-av i { font-size: 14px; color: var(--green); }
+
+  .bubble {
+    padding: 9px 13px; border-radius: 15px;
+    font-size: 14px; line-height: 1.55;
+    word-break: break-word;
+  }
+  .msg.bot .bubble {
+    background: var(--surface2); color: var(--text);
+    border-bottom-left-radius: 4px;
+    border: 0.5px solid var(--border);
+  }
+  .msg.user .bubble {
+    background: var(--accent); color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .ts { font-size: 10px; color: var(--text3); margin-top: 3px; }
+  .msg.user .ts { text-align: right; }
+
+  /* ── TYPING ── */
+   .typing-dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--text3); border-radius: 50%;
+    animation: blink 1.2s infinite; margin: 0 2px;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes blink { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
+
+  /* ── INPUT AREA ── */
+  #input-area {
+    padding: 10px 12px 12px;
+    border-top: 0.5px solid var(--border);
+    background: var(--surface);
+  }
+  #quick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .qa-btn {
+    font-size: 12px; padding: 4px 11px;
+    border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2); cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .qa-btn:hover { background: var(--accent-light); border-color: var(--accent-mid); color: var(--accent); }
+
+  #input-row { display: flex; align-items: flex-end; gap: 8px; }
+  #user-input {
+    flex: 1; padding: 9px 12px; font-size: 14px;
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none; resize: none;
+    min-height: 38px; max-height: 100px;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+  }
+  #user-input:focus { border-color: var(--accent-mid); }
+
+  #voice-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 0.5px solid var(--border2);
+    background: var(--surface2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2); transition: all 0.15s; flex-shrink: 0;
+  }
+  #voice-btn:hover { background: var(--coral-light); border-color: var(--coral); color: var(--coral); }
+  #voice-btn.listening { background: var(--coral-light); border-color: var(--coral); color: var(--coral); animation: pulse 1s infinite; }
+  #voice-btn i { font-size: 17px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  #send-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: none; background: var(--accent); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; transition: background 0.15s; flex-shrink: 0;
+  }
+  #send-btn:hover { background: #3C3489; }
+  #send-btn i { font-size: 17px; }
+
+  /* ── MODAL ── */
+  #modal-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.35); border-radius: 20px;
+    z-index: 20; align-items: center; justify-content: center;
+  }
+  #modal-overlay.open { display: flex; }
+  #modal {
+    background: var(--surface); border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    padding: 20px; width: 92%; max-height: 78%; overflow-y: auto;
+  }
+  #modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .modal-close {
+    float: right; background: none; border: none; cursor: pointer;
+    color: var(--text2); font-size: 20px; line-height: 1; margin-top: -2px;
+  }
+
+  /* history */
+  #history-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  #history-list li {
+    font-size: 13px; padding: 7px 11px;
+    border-radius: var(--radius-sm);
+    background: var(--surface2); color: var(--text2);
+  }
+  #history-list li.you { color: #3C3489; background: var(--accent-light); }
+
+  /* links tabs */
+  #tab-bar { display: flex; gap: 2px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border); }
+  .tab {
+    padding: 7px 14px; font-size: 13px; cursor: pointer;
+    border: none; background: none; color: var(--text2);
+    border-bottom: 2px solid transparent; margin-bottom: -0.5px;
+    transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .link-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .link-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 13px; border-radius: 20px;
+    border: 0.5px solid var(--border2);
+    background: var(--surface2); font-size: 13px;
+    color: var(--text2); cursor: pointer;
+    transition: all 0.15s; text-decoration: none;
+  }
+  .link-chip:hover { background: var(--green-light); border-color: #5DCAA5; color: var(--green); }
+  .link-chip i { font-size: 15px; }
+
+  /* resume */
+  .resume-drop {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 22px; text-align: center; cursor: pointer;
+    color: var(--text2); font-size: 13px;
+    margin-bottom: 12px; transition: all 0.15s;
+  }
+  .resume-drop:hover { border-color: var(--accent-mid); background: var(--accent-light); }
+  .resume-drop i { font-size: 30px; display: block; margin-bottom: 8px; color: var(--accent-mid); }
+  #resume-result { font-size: 13px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; }
+  #resume-result strong { color: var(--text); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="topbar">
+    <div id="topbar-left">
+      <div class="bot-avatar"><i class="ti ti-robot"></i></div>
+      <div>
+        <div id="bot-name">SmartBot</div>
+        <div id="bot-status">Online</div>
+      </div>
+    </div>
+    <div id="topbar-actions">
+      <button class="icon-btn" onclick="openModal('history')" title="Chat history"><i class="ti ti-history"></i></button>
+      <button class="icon-btn" onclick="openModal('links')"   title="Open apps"><i class="ti ti-apps"></i></button>
+    <button class="icon-btn" onclick="toggleTheme()" title="Theme"><i class="ti ti-moon"></i></button>
+<button class="qa-btn" onclick="openCalculator()">Calc</button>
+    </div>
+  </div>
+
+  <div id="chat-area"></div>
+
+  <div id="input-area">
+    <div id="quick-actions">
+      <button class="qa-btn" onclick="sendQuick('Tell me a joke')">joke</button>
+      <button class="qa-btn" onclick="sendQuick('What time is it?')">time</button>
+      <button class="qa-btn" onclick="sendQuick('What is the date?')">date</button>
+      <button class="qa-btn" onclick="sendQuick('How are you?')">how are you?</button>
+      <button class="qa-btn" onclick="sendQuick('Show history')">history</button>
+      <button class="qa-btn" onclick="sendQuick('play rps')">RPS</button>
+      <button class="qa-btn" onclick="sendQuick('flip coin')">Coin</button>
+      <button class="qa-btn" onclick="sendQuick('guess game')">Guess</button>
+    </div>
+    <div id="input-row">
+      <textarea id="user-input" placeholder="Type a message..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button id="voice-btn" title="Voice input" onclick="toggleVoice()">
+        <i class="ti ti-microphone"></i>
+      </button>
+      <button id="send-btn" onclick="sendMessage()">
+        <i class="ti ti-send"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="modal-overlay" onclick="closeModalOutside(event)">
+    <div id="modal"></div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───
+const RESPONSES = {
+  greetings:  ["Hello! 😊", "Hi there!", "Hey! How can I help?"],
+  how_are_you:["I'm doing great!", "Awesome! Thanks for asking.", "Doing well!"],
+  thanks:     ["You're welcome! 😊", "Happy to help!", "No problem!"],
+  bye:        ["Goodbye! Take care! 👋", "See you later!", "Bye! Come back soon!"],
+  jokes: [
+    "Why do programmers hate nature? Too many bugs! 😂",
+    "Why was Python sad? Too many exceptions! 😄",
+    "I'd tell a UDP joke, but you might not get it. 😎",
+    "Why do Java developers wear glasses? Because they don't C#! 🤓"
+  ]
+};
+
+let userName    = "";
+let chatHistory = [];
+let recognition = null;
+let isListening = false;
+
+// ─── HELPERS ───
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function nowTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function autoResize(el) {
+  el.style.height = '38px';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ─── RENDER ───
+function addMsg(text, sender) {
+  const area = document.getElementById('chat-area');
+
+  const wrap   = document.createElement('div');
+  wrap.className = 'msg ' + sender;
+
+  const av = document.createElement('div');
+  av.className = 'msg-av ' + (sender === 'bot' ? 'bot-av' : 'user-av');
+  av.innerHTML  = sender === 'bot'
+    ? '<i class="ti ti-robot"></i>'
+    : '<i class="ti ti-user"></i>';
+
+  const right  = document.createElement('div');
+  const bubble = document.createElement('div');
+  bubble.className   = 'bubble';
+  bubble.textContent = text;
+
+  const ts = document.createElement('div');
+  ts.className   = 'ts';
+  ts.textContent = nowTime();
+
+  right.appendChild(bubble);
+  right.appendChild(ts);
+  wrap.appendChild(av);
+  wrap.appendChild(right);
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+
+  chatHistory.push({ sender, text });
+}
+
+function showTyping() {
+  const area = document.getElementById('chat-area');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot';
+  wrap.id        = 'typing-indicator';
+  wrap.innerHTML = `
+    <div class="msg-av bot-av"><i class="ti ti-robot"></i></div>
+    <div class="bubble" style="padding:12px 14px;">
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+    </div>`;
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+
+
+async function sendMessage(override) {
+
+  const input = document.getElementById('user-input');
+
+  const text = (override || input.value).trim();
+
+  if (!text) return;
+
+  addMsg(text, 'user');
+
+  input.value = '';
+
+  input.style.height = '38px';
+
+  showTyping();
+
+  try {
+
+    const response = await fetch('/chat', {
+
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify({
+        message: text
+      })
+    });
+
+    const data = await response.json();
+
+    removeTyping();
+
+    addMsg(data.reply, 'bot');
+
+  }
+
+  catch (error) {
+
+    removeTyping();
+
+    addMsg("Server error ⚠️", 'bot');
+
+    console.error(error);
+  }
+}
+
+
+
+function sendQuick(text) { sendMessage(text); }
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// ─── VOICE ───
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    addMsg("Voice input isn't supported in this browser. Please use Chrome! 🎤", 'bot');
+    return;
+  }
+  const btn = document.getElementById('voice-btn');
+  if (isListening) { recognition.stop(); return; }
+
+  const SR  = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang            = 'en-US';
+  recognition.interimResults  = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart  = () => { isListening = true;  btn.classList.add('listening'); };
+  recognition.onend    = () => { isListening = false; btn.classList.remove('listening'); };
+  recognition.onerror  = () => { addMsg("Couldn't hear you. Please try again. 🎤", 'bot'); };
+  recognition.onresult = (e) => {
+    const t = e.results[0][0].transcript;
+    document.getElementById('user-input').value = t;
+    sendMessage();
+  };
+  recognition.start();
+}
+
+// ─── MODAL ───
+function openModal(type) {
+  const overlay = document.getElementById('modal-overlay');
+  const modal   = document.getElementById('modal');
+  overlay.classList.add('open');
+
+  if (type === 'history') {
+    const items = chatHistory.length
+      ? chatHistory.map(m =>
+          `<li class="${m.sender === 'user' ? 'you' : ''}">
+            <strong>${m.sender === 'user' ? 'You' : 'Bot'}:</strong> ${m.text}
+          </li>`).join('')
+      : '<li>No messages yet.</li>';
+    modal.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      <h3><i class="ti ti-history" style="margin-right:6px;vertical-align:-2px"></i>Chat History</h3>
+      <ul id="history-list">${items}</ul>`;
+  }
+
+  if (type === 'links') {
+    modal.innerHTML = `
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      <h3><i class="ti ti-apps" style="margin-right:6px;vertical-align:-2px"></i>Open Apps &amp; Websites</h3>
+      <div id="tab-bar">
+        <button class="tab active" onclick="showTab('search')">Search</button>
+        <button class="tab" onclick="showTab('social')">Social</button>
+        <button class="tab" onclick="showTab('tools')">Tools</button>
+      </div>
+      <div id="tab-search" class="tab-content active">
+        <div class="link-row">
+          <a class="link-chip" href="https://google.com" target="_blank"><i class="ti ti-brand-google"></i>Google</a>
+          <a class="link-chip" href="https://bing.com"   target="_blank"><i class="ti ti-search"></i>Bing</a>
+          <a class="link-chip" href="https://youtube.com" target="_blank"><i class="ti ti-brand-youtube"></i>YouTube</a>
+        </div>
+      </div>
+      <div id="tab-social" class="tab-content">
+        <div class="link-row">
+          <a class="link-chip" href="https://github.com"   target="_blank"><i class="ti ti-brand-github"></i>GitHub</a>
+          <a class="link-chip" href="https://linkedin.com" target="_blank"><i class="ti ti-brand-linkedin"></i>LinkedIn</a>
+          <a class="link-chip" href="https://twitter.com"  target="_blank"><i class="ti ti-brand-x"></i>Twitter</a>
+        </div>
+      </div>
+      <div id="tab-tools" class="tab-content">
+        <div class="link-row">
+          <a class="link-chip" href="https://claude.ai"       target="_blank"><i class="ti ti-brain"></i>Claude AI</a>
+          <a class="link-chip" href="https://replit.com"      target="_blank"><i class="ti ti-code"></i>Replit</a>
+          <a class="link-chip" href="https://docs.google.com" target="_blank"><i class="ti ti-file-text"></i>Google Docs</a>
+        </div>
+      </div>`;
+  }
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick="showTab('${name}')"]`)
+  .classList.add('active');
+
+document.getElementById('tab-' + name)
+  .classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+
+}
+function openCalculator() {
+
+    const modal = document.getElementById("modal");
+
+    document.getElementById("modal-overlay")
+        .classList.add("open");
+
+    modal.innerHTML = `
+        <button class="modal-close"
+            onclick="closeModal()">✕</button>
+
+        <h3>🧮 Calculator</h3>
+
+        <input
+            id="calc-display"
+            readonly
+            style="
+                width:100%;
+                padding:12px;
+                font-size:22px;
+                text-align:right;
+                margin-bottom:10px;
+            ">
+
+        <div class="calc-grid">
+
+            <button onclick="addCalc('7')">7</button>
+            <button onclick="addCalc('8')">8</button>
+            <button onclick="addCalc('9')">9</button>
+            <button onclick="addCalc('/')">÷</button>
+
+            <button onclick="addCalc('4')">4</button>
+            <button onclick="addCalc('5')">5</button>
+            <button onclick="addCalc('6')">6</button>
+            <button onclick="addCalc('*')">×</button>
+
+            <button onclick="addCalc('1')">1</button>
+            <button onclick="addCalc('2')">2</button>
+            <button onclick="addCalc('3')">3</button>
+            <button onclick="addCalc('-')">−</button>
+
+            <button onclick="addCalc('0')">0</button>
+            <button onclick="addCalc('.')">.</button>
+            <button onclick="calculateCalc()">=</button>
+            <button onclick="addCalc('+')">+</button>
+
+            <button
+                onclick="clearCalc()"
+                style="grid-column: span 4;">
+                Clear
+            </button>
+
+        </div>
+    `;
+}
+
+function addCalc(value) {
+
+    document.getElementById("calc-display").value += value;
+}
+
+function clearCalc() {
+
+    document.getElementById("calc-display").value = "";
+}
+
+function calculateCalc() {
+
+    try {
+
+        const display =
+            document.getElementById("calc-display");
+
+        display.value = eval(display.value);
+
+    } catch {
+
+        document.getElementById("calc-display").value =
+            "Error";
+    }
+}
+function toggleTheme() {
+
+    document.body.classList.toggle("dark");
+
+    if (document.body.classList.contains("dark")) {
+
+        localStorage.setItem("theme", "dark");
+
+    } else {
+
+        localStorage.setItem("theme", "light");
+    }
+}
+
+// ─── INIT ───
+if (localStorage.getItem("theme") === "dark") {
+
+    document.body.classList.add("dark");
+}
+setTimeout(() => addMsg("Hi! I'm SmartBot 🤖 Ask me anything, try the quick buttons, or tap the mic!", 'bot'), 400);
+</script>
+</body>
+</html>

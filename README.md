@@ -1,4 +1,11 @@
-# 🤖 SmartChatBot
+# 🤖 SmartChatBot 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success)](https://decodelabs-task1-smartchatbot.onrender.com)
+
+## 🚀 Live Demo
+
+🔗 https://decodelabs-task1-smartchatbot.onrender.com
+
+---
 
 ## 📌 Overview
 

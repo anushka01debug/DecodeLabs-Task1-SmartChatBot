@@ -1,5 +1,12 @@
 # 🤖 SmartChatBot
 
+## 🚀 Live Demo
+
+https://decodelabs-task1-smartchatbot.onrender.com
+
+**Note:** This project is hosted on Render's free tier. The first request may take up to 60 seconds if the service is waking from sleep.
+
+
 ## 📌 Overview
 
 SmartBot is a feature-rich chatbot developed using Flask, Python, HTML, CSS, and JavaScript. The project combines a rule-based conversational assistant with productivity tools, mini-games, voice input, calculator support, dark/light theme switching, and a modern responsive interface.

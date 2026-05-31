@@ -1,10 +1,4 @@
-# 🤖 SmartChatBot 
-
-## 🚀 Live Demo
-
-🔗 https://decodelabs-task1-smartchatbot.onrender.com
-
----
+# 🤖 SmartChatBot
 
 ## 📌 Overview
 
